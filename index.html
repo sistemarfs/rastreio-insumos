@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRI — Sistema de Rastreamento de Insumos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1B3A5C;--navy2:#254D78;--navy-pale:#E8EFF6;
+  --green:#2D7A3A;--green2:#358544;--green-pale:#D8EEDC;
+  --bg:#F2F5F0;--surface:#FFFFFF;--surface2:#EBF0E8;
+  --ink:#1A2B1A;--ink2:#3D5A3E;--ink3:#7A9A7C;
+  --red:#C0392B;--red-pale:#FAEAE8;--yellow:#C07A00;--yellow-pale:#FDF3DC;
+  --orange:#C05000;--orange-pale:#FDF0E0;
+  --border:#C8D8C8;--shadow:0 2px 14px rgba(27,58,92,0.09);--shadow-lg:0 8px 40px rgba(27,58,92,0.15);
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
+#login-screen{display:none;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(140deg,var(--navy) 0%,var(--navy2) 55%,#1A4A2A 100%);padding:20px}
+.login-card{background:#fff;border-radius:20px;padding:38px 34px;width:100%;max-width:370px;box-shadow:var(--shadow-lg)}
+.lg-logo{text-align:center;margin-bottom:24px}
+.lg-logo-mark{width:50px;height:50px;border-radius:13px;background:var(--navy);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.lg-logo h1{font-family:'Source Serif 4',serif;font-size:24px;color:var(--navy)}
+.lg-logo p{font-size:12px;color:var(--ink3);margin-top:3px}
+.fl{display:flex;flex-direction:column;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:0.4px}
+.fi{padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--ink);background:var(--bg);outline:none;transition:all .14s;width:100%}
+.fi:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-pale)}
+.msg-err{display:none;background:var(--red-pale);color:var(--red);border-radius:6px;padding:8px 11px;font-size:12px;font-weight:600}
+.login-btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:hover{background:var(--navy2)}.login-btn:disabled{opacity:.6;cursor:not-allowed}
+.lg-footer{text-align:center;margin-top:14px;font-size:11px;color:var(--ink3)}
+.ld-overlay{display:none;position:fixed;inset:0;background:rgba(27,58,92,.45);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ld-overlay.show{display:flex}
+.ld-box{background:#fff;border-radius:14px;padding:26px 34px;text-align:center;box-shadow:var(--shadow-lg)}
+.spinner{width:36px;height:36px;border:3px solid var(--green-pale);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 11px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-box p{font-size:13px;color:var(--ink2);font-weight:600}
+#app{display:none}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);height:56px;display:flex;align-items:center;padding:0 22px;gap:2px;box-shadow:0 2px 18px rgba(27,58,92,.35);flex-wrap:nowrap;overflow-x:auto}
+.nav-logo{font-family:'Source Serif 4',serif;font-size:20px;font-weight:700;color:#fff;margin-right:16px;cursor:pointer;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.nav-logo-mark{width:26px;height:26px;border-radius:6px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nb{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,.62);font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .14s;white-space:nowrap}
+.nb:hover{background:rgba(255,255,255,.11);color:#fff}.nb.active{background:var(--green);color:#fff}
+.nb svg{width:14px;height:14px;flex-shrink:0}
+.nav-spacer{flex:1;min-width:8px}
+.nav-user{display:flex;align-items:center;gap:7px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,.08);flex-shrink:0}
+.nav-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.nav-un{font-size:12px;font-weight:600;color:#fff;line-height:1.2}
+.nav-ur{font-size:10px;color:rgba(255,255,255,.5);line-height:1.2}
+.ni-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.22);background:transparent;color:rgba(255,255,255,.65);font-family:'Source Sans 3',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .14s;margin-left:4px;flex-shrink:0;white-space:nowrap}
+.ni-btn:hover{border-color:var(--green);color:#7CCC8A}.ni-btn svg{width:12px;height:12px}
+.page{display:none;padding-top:56px;min-height:100vh}.page.active{display:block}
+.ph{padding:20px 28px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;background:var(--surface)}
+.ph-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ph h2{font-family:'Source Serif 4',serif;font-size:19px;font-weight:700;flex:1;color:var(--navy)}
+.pb{padding:20px 28px}
+.home-hero{background:linear-gradient(140deg,var(--navy) 0%,var(--navy2) 55%,#1A4A2A 100%);padding:48px 44px 40px;text-align:center;position:relative;overflow:hidden}
+.home-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),transparent)}
+.home-hero h1{font-family:'Source Serif 4',serif;font-size:clamp(22px,3.5vw,38px);font-weight:700;color:#fff;line-height:1.15;margin-bottom:10px;position:relative}
+.home-hero h1 em{color:#7CCC8A;font-style:normal}
+.home-hero p{color:rgba(255,255,255,.65);font-size:14px;max-width:440px;margin:0 auto;position:relative}
+.hcards{display:flex;gap:15px;flex-wrap:wrap;justify-content:center;padding:30px 36px 14px;max-width:1100px;margin:0 auto}
+.hcard{background:var(--surface);border:1.5px solid var(--border);border-radius:15px;padding:20px 16px;width:175px;text-align:center;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.hcard:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--green)}
+.hcard-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.ic-n{background:var(--navy-pale)}.ic-g{background:var(--green-pale)}.ic-m{background:linear-gradient(135deg,var(--navy-pale),var(--green-pale))}
+.hcard h3{font-family:'Source Serif 4',serif;font-size:13px;font-weight:600;color:var(--ink)}
+.hcard p{font-size:11px;color:var(--ink3);line-height:1.5}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:var(--radius-sm);border:none;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .14s}
+.btn svg{width:13px;height:13px}
+.btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green2)}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy2)}
+.btn-ghost{background:transparent;color:var(--ink2);border:1.5px solid var(--border)}.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{padding:5px 9px;font-size:12px}
+.btn-danger{background:var(--red-pale);color:var(--red);border:none}.btn-warn{background:var(--yellow-pale);color:var(--yellow);border:none}
+.sw{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+.st{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap}
+.sm{flex:1;min-width:200px;position:relative}
+.sm svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--ink3);pointer-events:none}
+.sm input{width:100%;padding:8px 11px 8px 31px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:13px;background:var(--bg);outline:none;transition:all .14s;color:var(--ink)}
+.sm input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-pale)}
+.sf{display:flex;gap:7px;flex-wrap:wrap}
+.sc{display:flex;flex-direction:column;gap:3px}
+.sc label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3)}
+.sc select,.sc input[type=text],.sc input[type=date]{padding:5px 9px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:12px;background:var(--bg);outline:none;color:var(--ink);min-width:120px;transition:border-color .14s}
+.sc select:focus,.sc input:focus{border-color:var(--green)}
+.stats-row{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.smi{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:90px}
+.smi-v{font-family:'Source Serif 4',serif;font-size:20px;font-weight:700;color:var(--navy)}
+.smi-l{font-size:11px;color:var(--ink3);margin-top:2px;font-weight:600}
+.smi.ok .smi-v{color:var(--green)}.smi.warn .smi-v{color:var(--yellow)}.smi.bad .smi-v{color:var(--red)}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:13px}
+.rc{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:all .14s;cursor:pointer}
+.rc:hover{box-shadow:var(--shadow);border-color:var(--green)}
+.rc.reprovada{border-left:4px solid var(--red)!important}
+.rc-top{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.rc-num{font-family:'Source Serif 4',serif;font-size:15px;font-weight:700;color:var(--navy)}
+.rc-op{font-size:11px;color:var(--ink3);font-weight:700}
+.rc-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:700}
+.t-ok{background:var(--green-pale);color:var(--green)}.t-pend{background:var(--yellow-pale);color:var(--yellow)}
+.t-alert{background:var(--red-pale);color:var(--red)}.t-orange{background:var(--orange-pale);color:var(--orange)}
+.t-navy{background:var(--navy-pale);color:var(--navy)}.t-type{background:var(--navy-pale);color:var(--navy)}
+.mo{display:none;position:fixed;inset:0;background:rgba(27,58,92,.52);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.mo.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:780px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-lg{max-width:920px}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--navy);border-radius:16px 16px 0 0;position:sticky;top:0;z-index:10}
+.mh h3{font-family:'Source Serif 4',serif;font-size:16px;font-weight:700;flex:1;color:#fff}
+.mc{width:27px;height:27px;border-radius:7px;border:none;background:rgba(255,255,255,.15);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.8);transition:background .14s}
+.mc:hover{background:rgba(255,255,255,.28)}
+.mb{padding:18px 22px}
+.mf{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center;position:sticky;bottom:0;background:var(--surface);z-index:10}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fg2 .fg{display:flex;flex-direction:column;gap:4px}
+.fg2 .fg.s2{grid-column:span 2}
+.form-input{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--ink);background:var(--bg);outline:none;transition:all .14s;width:100%}
+.form-input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-pale)}
+textarea.form-input{resize:vertical;min-height:66px}
+.form-section{background:var(--surface2);border-radius:8px;padding:13px 14px;margin-bottom:12px}
+.form-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:8px 13px;border:none;background:transparent;font-family:'Source Sans 3',sans-serif;font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .14s}
+.tab.active{color:var(--navy);border-bottom-color:var(--green)}.tp{display:none}.tp.active{display:block}
+.tw{overflow-x:auto;border-radius:var(--radius);border:1.5px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);background:var(--surface2);border-bottom:1.5px solid var(--border)}
+td{padding:9px 12px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.actions{display:flex;gap:4px}
+.conf-bar{display:flex;align-items:center;gap:8px}
+.conf-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px;transition:width .4s}
+.conf-val{font-size:12px;font-weight:700;min-width:36px}
+.pantone-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .14s;cursor:pointer}
+.pantone-card:hover{box-shadow:var(--shadow);border-color:var(--green)}
+.pc-stripe{height:7px}.pc-body{padding:13px 14px}
+.pc-code{font-family:'Source Serif 4',serif;font-size:16px;font-weight:700;color:var(--navy)}
+.pc-name{font-size:12px;color:var(--ink3);margin-top:2px}
+.pc-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.pc-meta-item .lbl{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink3);letter-spacing:.4px}
+.pc-meta-item .val{font-family:'Source Serif 4',serif;font-size:16px;font-weight:700;color:var(--navy);margin-top:1px}
+.pc-actions{display:flex;gap:6px;margin-top:10px}
+.pc-actions .btn{flex:1;justify-content:center;font-size:12px;padding:6px 8px}
+.pig-row{display:flex;gap:6px;align-items:center;margin-bottom:7px;background:var(--bg);padding:8px;border-radius:7px}
+.pig-row .form-input{font-size:12px;padding:6px 8px}
+.st-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--ink3);margin:16px 0 8px}
+.empty{text-align:center;padding:40px 20px;color:var(--ink3)}
+.empty-icon{font-size:34px;margin-bottom:10px}
+.al-list{display:flex;flex-direction:column;gap:6px}
+.al-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface)}
+.al-item.alert{border-left:3px solid var(--red)}.al-item.warn{border-left:3px solid var(--yellow)}.al-item.ok{border-left:3px solid var(--green)}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.al-dot.r{background:var(--red)}.al-dot.y{background:var(--yellow)}.al-dot.g{background:var(--green)}
+.al-txt strong{font-size:13px;font-weight:700;display:block;color:var(--ink)}
+.al-txt span{font-size:11px;color:var(--ink3)}
+.code-row{display:flex;gap:7px;align-items:center;font-size:13px;margin-bottom:4px}
+.code-lbl{width:160px;color:var(--ink3);flex-shrink:0;font-size:12px}
+.code-val{font-weight:700;background:var(--navy-pale);color:var(--navy);padding:2px 8px;border-radius:4px;font-size:12px}
+.usr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px}
+.usr-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;gap:12px}
+.usr-n{font-weight:700;font-size:14px;color:var(--ink)}.usr-u{font-size:12px;color:var(--ink3)}
+.usr-r{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin-top:3px}
+.r-adm{background:var(--navy-pale);color:var(--navy)}.r-view{background:var(--green-pale);color:var(--green)}
+.bk-opt{display:flex;align-items:center;gap:13px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .14s;margin-bottom:8px}
+.bk-opt:hover{border-color:var(--green);background:var(--green-pale)}
+.bk-oi{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bk-opt h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}.bk-opt p{font-size:12px;color:var(--ink3)}
+.bk-info{background:var(--navy-pale);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--ink2);margin-top:12px;line-height:1.6}
+.detrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.detrow .di .lbl{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase}
+.detrow .di .val{font-size:13px;margin-top:2px;font-weight:600;color:var(--ink)}
+.reprovada-banner{background:var(--red-pale);border:2px solid var(--red);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-weight:700;color:var(--red);font-size:13px}
+.escala-resultado{background:var(--green-pale);border:1.5px solid var(--green);border-radius:8px;padding:13px 15px;margin-top:12px}
+.escala-resultado h4{font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.escala-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(45,122,58,.15);font-size:13px}
+.escala-row:last-child{border-bottom:none}
+.er-tipo{width:80px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--green);flex-shrink:0}
+.er-desc{flex:1;color:var(--ink)}.er-orig{color:var(--ink3);font-size:12px;min-width:70px;text-align:right}
+.er-new{font-weight:700;color:var(--navy);min-width:70px;text-align:right}
+@media(max-width:640px){.pb{padding:12px}.ph{padding:10px 12px}.fg2{grid-template-columns:1fr}.fg2 .fg.s2{grid-column:span 1}nav{padding:0 8px}.nb span{display:none}.nav-un,.nav-ur{display:none}}
+</style>
+</head>
+<body>
+<div class="ld-overlay" id="ld"><div class="ld-box"><div class="spinner"></div><p id="ld-msg">Carregando...</p></div></div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="lg-logo">
+      <div class="lg-logo-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></div>
+      <h1>SRI</h1><p>Sistema de Rastreamento de Insumos</p>
+    </div>
+    <div id="lg-err" class="msg-err"></div>
+    <div class="fl">
+      <div class="fg"><label>Usuário</label><input type="text" class="fi" id="lg-user" placeholder="Digite seu usuário" onkeydown="if(event.key==='Enter')document.getElementById('lg-pass').focus()"></div>
+      <div class="fg"><label>Senha</label><input type="password" class="fi" id="lg-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="login-btn" id="lg-btn" onclick="doLogin()">Entrar</button>
+    </div>
+    <div class="lg-footer">by ReginaldoF SRI v1.5 · Estamparia</div>
+  </div>
+</div>
+<div id="app">
+<nav>
+  <div class="nav-logo" onclick="go('home')"><div class="nav-logo-mark"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></div>SRI</div>
+  <button class="nb active" id="nb-home" onclick="go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Início</span></button>
+  <button class="nb" id="nb-receitas" onclick="go('receitas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Receitas</span></button>
+  <button class="nb" id="nb-pantones" onclick="go('pantones')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg><span>Pantones</span></button>
+  <button class="nb" id="nb-qualidade" onclick="go('qualidade')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Qualidade</span></button>
+  <button class="nb" id="nb-produtos" onclick="go('produtos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Produtos</span></button>
+  <button class="nb" id="nb-fornecedores" onclick="go('fornecedores')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>Fornecedores</span></button>
+  <button class="nb" id="nb-usuarios" style="display:none" onclick="go('usuarios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Usuários</span></button>
+  <div class="nav-spacer"></div>
+  <div class="nav-user"><div class="nav-av" id="nav-av" style="background:var(--green)">A</div><div><div class="nav-un" id="nav-un">—</div><div class="nav-ur" id="nav-ur">—</div></div></div>
+  <button class="ni-btn" id="btn-bk" onclick="openM('m-backup')" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-8.51"/></svg>Backup</button>
+  <button class="ni-btn" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</button>
+</nav>
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="home-hero"><h1>Rastreamento de <em>Insumos</em></h1><p>Formulações, rastreabilidade, produção e qualidade em um único sistema.</p></div>
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="hcards">
+      <div class="hcard" onclick="go('receitas')"><div class="hcard-icon ic-n"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Receitas</h3><p>Formulações e histórico de produção.</p></div>
+      <div class="hcard" onclick="go('pantones')"><div class="hcard-icon ic-g"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div><h3>Banco Pantone</h3><p>Biblioteca permanente de cores.</p></div>
+      <div class="hcard" onclick="go('qualidade')"><div class="hcard-icon ic-m"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h3>Qualidade</h3><p>Aprovações e reprovações.</p></div>
+      <div class="hcard" onclick="go('produtos')"><div class="hcard-icon ic-n"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><h3>Produtos</h3><p>Tintas, pigmentos e auxiliares.</p></div>
+      <div class="hcard" onclick="go('fornecedores')"><div class="hcard-icon ic-g"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><h3>Fornecedores</h3><p>Cadastro de fabricantes.</p></div>
+      <div class="hcard" id="hcard-usr" onclick="go('usuarios')" style="display:none"><div class="hcard-icon ic-n"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><h3>Usuários</h3><p>Gestão de acessos.</p></div>
+    </div>
+    <div style="padding:0 36px 40px"><div class="st-title">Alertas do Dia</div><div class="al-list" id="home-alerts"></div></div>
+  </div>
+</div>
+<!-- RECEITAS -->
+<div class="page" id="page-receitas">
+  <div class="ph"><div class="ph-icon ic-n"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h2>Receitas</h2><button class="btn btn-primary adm" onclick="openNovaReceita()">+ Nova Receita</button></div>
+  <div class="pb">
+    <div class="sw">
+      <div class="st"><div class="sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="q-rec" placeholder="Pedido, OP, cliente, Pantone, responsável..." oninput="renderReceitas()"></div><button class="btn btn-ghost btn-sm" onclick="clearFRec()">✕ Limpar</button></div>
+      <div class="sf"><div class="sc"><label>Tipo</label><select id="f-rec-tipo" onchange="renderReceitas()"><option value="">Todos</option><option value="producao">Produção</option><option value="amostra">Amostra</option></select></div><div class="sc"><label>Qualidade</label><select id="f-rec-qual" onchange="renderReceitas()"><option value="">Todos</option><option value="aguardando">Aguardando</option><option value="aprovada">Aprovada</option><option value="aprovada_restricao">C/ Restrição</option><option value="reprovada">Reprovada</option></select></div><div class="sc"><label>Data</label><input type="date" id="f-rec-dt" onchange="renderReceitas()"></div></div>
+    </div>
+    <div class="stats-row" id="rec-stats"></div>
+    <div class="cg" id="rec-grid"></div>
+  </div>
+</div>
+<!-- PANTONES -->
+<div class="page" id="page-pantones">
+  <div class="ph"><div class="ph-icon ic-g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div><h2>Banco de Cores Pantone</h2><button class="btn btn-primary adm" onclick="openNovoPantone()">+ Novo Pantone</button></div>
+  <div class="pb"><div class="sw"><div class="st"><div class="sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="q-pan" placeholder="Código ou nome..." oninput="renderPantones()"></div></div></div><div class="stats-row" id="pan-stats"></div><div class="cg" id="pan-grid"></div></div>
+</div>
+<!-- QUALIDADE -->
+<div class="page" id="page-qualidade">
+  <div class="ph"><div class="ph-icon ic-m"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h2>Controle de Qualidade</h2><button class="btn btn-primary adm" onclick="openNovaAvaliacao()">+ Nova Avaliação</button></div>
+  <div class="pb">
+    <div class="sw"><div class="st"><div class="sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="q-qual" placeholder="Pedido, OP, Pantone, responsável..." oninput="renderQualidade()"></div></div><div class="sf"><div class="sc"><label>Status</label><select id="f-qual-st" onchange="renderQualidade()"><option value="">Todos</option><option value="aguardando">Aguardando</option><option value="aprovada">Aprovada</option><option value="aprovada_restricao">C/ Restrição</option><option value="reprovada">Reprovada</option></select></div></div></div>
+    <div class="stats-row" id="qual-stats"></div>
+    <div class="tw"><table><thead><tr><th>Pedido</th><th>OP</th><th>Referência</th><th>Pantone(s)</th><th>Responsável</th><th>Data</th><th>Status</th><th class="adm">Ações</th></tr></thead><tbody id="qual-tbody"></tbody></table></div>
+  </div>
+</div>
+<!-- PRODUTOS -->
+<div class="page" id="page-produtos">
+  <div class="ph"><div class="ph-icon ic-n"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><h2>Produtos</h2><button class="btn btn-primary adm" onclick="openNovoProduto()">+ Novo Produto</button></div>
+  <div class="pb"><div class="sw"><div class="st"><div class="sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="q-prod" placeholder="Descrição, fabricante, lote..." oninput="renderProdutos()"></div></div><div class="sf"><div class="sc"><label>Categoria</label><select id="f-prod-cat" onchange="renderProdutos()"><option value="">Todas</option><option value="tinta">Tinta</option><option value="pigmento">Pigmento</option><option value="produto_auxiliar">Auxiliar</option></select></div></div></div><div class="stats-row" id="prod-stats"></div><div class="tw"><table><thead><tr><th>Categoria</th><th>Descrição</th><th>Fabricante</th><th>Lote</th><th>Qtd.</th><th>Fab.</th><th class="adm">Ações</th></tr></thead><tbody id="prod-tbody"></tbody></table></div></div>
+</div>
+<!-- FORNECEDORES -->
+<div class="page" id="page-fornecedores">
+  <div class="ph"><div class="ph-icon ic-g"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><h2>Fornecedores</h2><button class="btn btn-primary adm" onclick="openNovoFornecedor()">+ Novo Fornecedor</button></div>
+  <div class="pb"><div class="sw"><div class="st"><div class="sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="q-forn" placeholder="Nome, cidade, contato..." oninput="renderFornecedores()"></div></div></div><div class="tw"><table><thead><tr><th>Empresa</th><th>Categoria</th><th>Cidade/UF</th><th>Contato</th><th>Telefone</th><th>E-mail</th><th class="adm">Ações</th></tr></thead><tbody id="forn-tbody"></tbody></table></div></div>
+</div>
+<!-- USUÁRIOS -->
+<div class="page" id="page-usuarios">
+  <div class="ph"><div class="ph-icon ic-n"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><h2>Usuários</h2><button class="btn btn-primary" onclick="openNovoUsuario()">+ Novo Usuário</button></div>
+  <div class="pb"><div class="usr-grid" id="usr-grid"></div></div>
+</div>
+</div>
+<!-- ═══ MODAL RECEITA ═══ -->
+<div class="mo" id="m-receita"><div class="modal modal-lg">
+  <div class="mh"><h3 id="m-rec-title">Nova Receita</h3><button class="mc" onclick="closeM('m-receita')">✕</button></div>
+  <div class="mb">
+    <div class="tabs"><button class="tab active" onclick="swTab('t-rec-ident',this)">Identificação</button><button class="tab" onclick="swTab('t-rec-form',this)">Formulações / Pantones</button></div>
+    <div class="tp active" id="t-rec-ident">
+      <div class="fg2">
+        <div class="fg"><label>Tipo *</label><select class="form-input" id="r-tipo"><option value="producao">Produção</option><option value="amostra">Amostra</option></select></div>
+        <div class="fg"><label>Responsável pela Formulação</label><input type="text" class="form-input" id="r-responsavel" placeholder="Nome do formulador"></div>
+        <div class="fg"><label>Nº do Pedido *</label><input type="text" class="form-input" id="r-pedido-num" placeholder="Ex: 25487" oninput="buscarPedido()"></div>
+        <div class="fg"><label>Cliente</label><input type="text" class="form-input" id="r-cliente" placeholder="Preenchido automaticamente"></div>
+        <div class="fg"><label>Nº da OP *</label><input type="text" class="form-input" id="r-op-num" placeholder="Ex: 001"></div>
+        <div class="fg"><label>Referência</label><input type="text" class="form-input" id="r-referencia" placeholder="Ex: REF-0294"></div>
+        <div class="fg"><label>Artigo</label><input type="text" class="form-input" id="r-artigo"></div>
+        <div class="fg"><label>Cor do Tecido</label><input type="text" class="form-input" id="r-cor-tecido"></div>
+        <div class="fg"><label>Qtd. de Peças</label><input type="number" class="form-input" id="r-qtd-pecas" min="0"></div>
+        <div class="fg s2"><label>Observações</label><textarea class="form-input" id="r-obs"></textarea></div>
+      </div>
+    </div>
+    <div class="tp" id="t-rec-form">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><div class="st-title" style="margin:0">Pantones desta Receita</div><button class="btn btn-ghost btn-sm" onclick="addFormulacao()">+ Adicionar Pantone</button></div>
+      <div id="form-list"></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-receita')">Cancelar</button><button class="btn btn-primary" onclick="saveReceita()">💾 Salvar Receita</button></div>
+</div></div>
+
+<!-- ═══ MODAL DETALHE RECEITA ═══ -->
+<div class="mo" id="m-det-receita"><div class="modal modal-lg">
+  <div class="mh"><h3 id="m-det-rec-title">Ficha da Receita</h3><button class="mc" onclick="closeM('m-det-receita')">✕</button></div>
+  <div class="mb" id="m-det-rec-body"></div>
+  <div class="mf"><button class="btn btn-ghost btn-sm adm" id="det-rec-edit">✏️ Editar</button><button class="btn btn-danger btn-sm adm" id="det-rec-del">✕ Excluir</button><button class="btn btn-ghost" onclick="closeM('m-det-receita')">Fechar</button></div>
+</div></div>
+
+<!-- ═══ MODAL PANTONE ═══ -->
+<div class="mo" id="m-pantone"><div class="modal">
+  <div class="mh"><h3 id="m-pan-title">Novo Pantone</h3><button class="mc" onclick="closeM('m-pantone')">✕</button></div>
+  <div class="mb"><div class="fg2">
+    <div class="fg"><label>Código Pantone *</label><input type="text" class="form-input" id="p-codigo" placeholder="Ex: 17-1622"></div>
+    <div class="fg"><label>Descrição / Nome da Cor *</label><input type="text" class="form-input" id="p-descricao" placeholder="Ex: Dusty Rose"></div>
+    <div class="fg s2"><label>Observações</label><textarea class="form-input" id="p-obs" rows="2"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-pantone')">Cancelar</button><button class="btn btn-primary" onclick="savePantone()">💾 Salvar</button></div>
+</div></div>
+
+<!-- ═══ MODAL DETALHE PANTONE ═══ -->
+<div class="mo" id="m-det-pantone"><div class="modal modal-lg">
+  <div class="mh"><h3 id="m-det-pan-title">Pantone</h3><button class="mc" onclick="closeM('m-det-pantone')">✕</button></div>
+  <div class="mb" id="m-det-pan-body"></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-det-pantone')">Fechar</button></div>
+</div></div>
+
+<!-- ═══ MODAL AVALIAÇÃO QUALIDADE ═══ -->
+<div class="mo" id="m-avaliacao"><div class="modal">
+  <div class="mh"><h3 id="m-av-title">Avaliação de Qualidade</h3><button class="mc" onclick="closeM('m-avaliacao')">✕</button></div>
+  <div class="mb"><div class="fg2">
+    <div class="fg"><label>Pedido / OP (ex: 25487 / 001)</label><input type="text" class="form-input" id="av-receita-ref" placeholder="Pedido / OP"></div>
+    <div class="fg"><label>Responsável *</label><input type="text" class="form-input" id="av-responsavel"></div>
+    <div class="fg"><label>Status *</label><select class="form-input" id="av-status" onchange="toggleMotivoReprov()"><option value="aguardando">🟡 Aguardando</option><option value="aprovada">🟢 Aprovada</option><option value="aprovada_restricao">🟠 C/ Restrição</option><option value="reprovada">🔴 Reprovada</option></select></div>
+    <div class="fg"><label>Data da Avaliação</label><input type="date" class="form-input" id="av-data"></div>
+    <div class="fg s2" id="av-motivos-wrap" style="display:none"><label>Motivos (múltipla seleção)</label><div id="av-motivos-list" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div></div>
+    <div class="fg s2"><label>Restrições / Observações</label><textarea class="form-input" id="av-obs" rows="3"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-avaliacao')">Cancelar</button><button class="btn btn-primary" onclick="saveAvaliacao()">💾 Salvar</button></div>
+</div></div>
+
+<!-- ═══ MODAL PRODUTO ═══ -->
+<div class="mo" id="m-produto"><div class="modal">
+  <div class="mh"><h3 id="m-prod-title">Novo Produto</h3><button class="mc" onclick="closeM('m-produto')">✕</button></div>
+  <div class="mb"><div class="fg2">
+    <div class="fg"><label>Categoria *</label><select class="form-input" id="pr-categoria"><option value="tinta">Tinta</option><option value="pigmento">Pigmento</option><option value="produto_auxiliar">Produto Auxiliar</option></select></div>
+    <div class="fg"><label>Descrição *</label><input type="text" class="form-input" id="pr-descricao"></div>
+    <div class="fg"><label>Fabricante *</label><input type="text" class="form-input" id="pr-fabricante"></div>
+    <div class="fg"><label>Lote</label><input type="text" class="form-input" id="pr-lote"></div>
+    <div class="fg"><label>Quantidade</label><input type="number" class="form-input" id="pr-quantidade" step="0.001" min="0"></div>
+    <div class="fg"><label>Unidade</label><select class="form-input" id="pr-unidade"><option>g</option><option>kg</option><option>ml</option><option>L</option><option>un</option></select></div>
+    <div class="fg"><label>Data de Fabricação</label><input type="date" class="form-input" id="pr-data-fab"></div>
+    <div class="fg s2"><label>Observações</label><textarea class="form-input" id="pr-obs" rows="2"></textarea></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-produto')">Cancelar</button><button class="btn btn-primary" onclick="saveProduto()">💾 Salvar</button></div>
+</div></div>
+
+<!-- ═══ MODAL FORNECEDOR ═══ -->
+<div class="mo" id="m-fornecedor"><div class="modal">
+  <div class="mh"><h3 id="m-forn-title">Novo Fornecedor</h3><button class="mc" onclick="closeM('m-fornecedor')">✕</button></div>
+  <div class="mb"><div class="fg2">
+    <div class="fg s2"><label>Nome da Empresa *</label><input type="text" class="form-input" id="fn-nome"></div>
+    <div class="fg"><label>Categoria *</label><select class="form-input" id="fn-categoria"><option value="tintas">Tintas</option><option value="pigmentos">Pigmentos</option><option value="produtos_auxiliares">Produtos Auxiliares</option></select></div>
+    <div class="fg"><label>Nome do Contato</label><input type="text" class="form-input" id="fn-contato"></div>
+    <div class="fg"><label>Telefone</label><input type="text" class="form-input" id="fn-tel"></div>
+    <div class="fg"><label>E-mail</label><input type="email" class="form-input" id="fn-email"></div>
+    <div class="fg"><label>Cidade</label><input type="text" class="form-input" id="fn-cidade"></div>
+    <div class="fg"><label>Estado (UF)</label><input type="text" class="form-input" id="fn-estado" maxlength="2" placeholder="SP"></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-fornecedor')">Cancelar</button><button class="btn btn-primary" onclick="saveFornecedor()">💾 Salvar</button></div>
+</div></div>
+
+<!-- ═══ MODAL USUÁRIO ═══ -->
+<div class="mo" id="m-usuario"><div class="modal">
+  <div class="mh"><h3 id="m-usr-title">Novo Usuário</h3><button class="mc" onclick="closeM('m-usuario')">✕</button></div>
+  <div class="mb"><div class="fl">
+    <div class="fg"><label>Nome completo *</label><input type="text" class="fi" id="u-nome"></div>
+    <div class="fg"><label>Usuário (login) *</label><input type="text" class="fi" id="u-user" placeholder="minúsculo, sem espaços"></div>
+    <div class="fg"><label>Perfil *</label><select class="fi" id="u-role"><option value="viewer">👁️ Visualizador</option><option value="admin">👑 Administrador</option></select></div>
+    <div class="fg" id="u-pw-wrap"><label>Senha *</label><input type="password" class="fi" id="u-pass" placeholder="mínimo 4 caracteres"></div>
+    <div class="fg" id="u-pw-edit" style="display:none"><label>Nova Senha (em branco = manter)</label><input type="password" class="fi" id="u-pass2"></div>
+  </div></div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-usuario')">Cancelar</button><button class="btn btn-primary" onclick="saveUsuario()">💾 Salvar</button></div>
+</div></div>
+
+<!-- ═══ MODAL BACKUP ═══ -->
+<div class="mo" id="m-backup"><div class="modal" style="max-width:440px">
+  <div class="mh"><h3>Backup e Restauração</h3><button class="mc" onclick="closeM('m-backup')">✕</button></div>
+  <div class="mb">
+    <div class="bk-opt" onclick="exportBk()"><div class="bk-oi ic-g"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div><h4>Exportar Backup</h4><p>Baixa todos os dados em JSON.</p></div></div>
+    <div class="bk-opt" onclick="document.getElementById('bk-in').click()"><div class="bk-oi ic-n"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B3A5C" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div><h4>Recuperar Backup</h4><p>Restaura dados a partir de JSON.</p></div></div>
+    <input type="file" id="bk-in" accept=".json" onchange="importBk(this)" style="display:none">
+    <div class="bk-info"><strong id="bk-stats">—</strong></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-backup')">Fechar</button></div>
+</div></div>
+<script>
+const SB_URL='https://xugfllhsdksdisbheczu.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1Z2ZsbGhzZGtzZGlzYmhlY3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODE2NTgsImV4cCI6MjA5NjQ1NzY1OH0.p_zQwh8vKK-Yh57XQl4VRq2yirnlhmRs0IC1MT6B0HU';
+let SB=null,CU=null;
+
+function ld(m='Carregando...'){document.getElementById('ld-msg').textContent=m;document.getElementById('ld').classList.add('show')}
+function uld(){document.getElementById('ld').classList.remove('show')}
+function gv(id){const e=document.getElementById(id);return e?e.value:''}
+function sv(id,v){const e=document.getElementById(id);if(e)e.value=v??''}
+function fmtDt(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('pt-BR')}
+function fmtDtHr(iso){if(!iso)return'—';return new Date(iso).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}
+function hp(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0}return h.toString(36)}
+const COLORS_AV=['#1B3A5C','#2D7A3A','#7A4A2A','#4A2A7A','#2A6A7A'];
+const MOTIVOS_REPROV=['Rachadura','Desbote','Migração da Cor do Tecido','Falha do Bloqueador','Baixa Cobertura','Alteração de Cor','Falha de Cura','Falha de Aderência','Baixa Elasticidade','Brilho Inadequado','Toque Inadequado','Problema de Registro','Outros'];
+const CAT_PROD_LABEL={tinta:'Tinta',pigmento:'Pigmento',produto_auxiliar:'Auxiliar'};
+const CAT_FORN_LABEL={tintas:'Tintas',pigmentos:'Pigmentos',produtos_auxiliares:'Auxiliares'};
+
+function statusTag(st){
+  const m={aguardando:'<span class="tag t-pend">🟡 Aguardando</span>',aprovada:'<span class="tag t-ok">🟢 Aprovada</span>',aprovada_restricao:'<span class="tag t-orange">🟠 C/ Restrição</span>',reprovada:'<span class="tag t-alert">🔴 Reprovada</span>'};
+  return m[st]||'<span class="tag t-navy">—</span>';
+}
+
+// AUTH
+function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none'}
+async function doLogin(){
+  const u=gv('lg-user').trim().toLowerCase(),p=gv('lg-pass');
+  const err=document.getElementById('lg-err'),btn=document.getElementById('lg-btn');
+  err.style.display='none';
+  if(!u||!p){err.textContent='Preencha usuário e senha.';err.style.display='block';return}
+  btn.disabled=true;btn.innerHTML='<div class="spinner" style="width:15px;height:15px;margin:0;border-width:2px"></div>';
+  try{
+    const{data,error}=await SB.from('usuarios').select('*').eq('username',u).eq('pass_hash',hp(p)).single();
+    if(error||!data)throw new Error('Usuário ou senha incorretos.');
+    CU=data;document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';
+    applyPerms();go('home');
+  }catch(e){err.textContent=e.message;err.style.display='block'}
+  finally{btn.disabled=false;btn.innerHTML='Entrar'}
+}
+function doLogout(){CU=null;showLogin()}
+function isAdm(){return CU&&CU.role==='admin'}
+function applyPerms(){
+  sv('nav-un',CU.nome);sv('nav-ur',isAdm()?'Administrador':'Visualizador');
+  const c=CU.nome.charCodeAt(0)%COLORS_AV.length;
+  document.getElementById('nav-av').style.background=COLORS_AV[c];
+  document.getElementById('nav-av').textContent=CU.nome.charAt(0).toUpperCase();
+  document.querySelectorAll('.adm').forEach(el=>el.style.display=isAdm()?'':'none');
+  const s=isAdm()?'':'none';
+  ['nb-usuarios','hcard-usr','btn-bk'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=s});
+}
+
+// NAV / MODAL / TABS
+function go(name){
+  if(name==='usuarios'&&!isAdm())return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const nb=document.getElementById('nb-'+name);if(nb)nb.classList.add('active');
+  const r={home:renderHome,receitas:renderReceitas,pantones:renderPantones,qualidade:renderQualidade,produtos:renderProdutos,fornecedores:renderFornecedores,usuarios:renderUsuarios};
+  if(r[name])r[name]();
+}
+function openM(id){document.getElementById(id).classList.add('open');if(id==='m-backup')updateBkStats()}
+function closeM(id){document.getElementById(id).classList.remove('open')}
+function swTab(tid,btn){
+  const mb=btn.closest('.mb')||btn.closest('.modal');
+  mb.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tid).classList.add('active');btn.classList.add('active');
+}
+
+// HOME
+async function renderHome(){
+  ld('Verificando alertas...');
+  try{
+    const hoje=new Date().toISOString().slice(0,10);
+    const{data:recHoje}=await SB.from('receitas').select('id').gte('created_at',hoje+'T00:00:00').lte('created_at',hoje+'T23:59:59');
+    const{data:avsHoje}=await SB.from('avaliacoes_qualidade').select('receita_id').gte('created_at',hoje+'T00:00:00').lte('created_at',hoje+'T23:59:59');
+    const nHoje=recHoje?.length||0;
+    const avsIds=new Set((avsHoje||[]).map(a=>a.receita_id));
+    const nPend=(recHoje||[]).filter(r=>!avsIds.has(r.id)).length;
+    const alerts=[];
+    alerts.push({tipo:nHoje>0?'ok':'warn',msg:`Receitas cadastradas hoje: <strong>${nHoje}</strong>`,sub:'Produções do dia registradas no sistema'});
+    if(nPend>0)alerts.push({tipo:'alert',msg:`⚠️ <strong>${nPend} receita(s)</strong> ainda sem avaliação de qualidade.`,sub:'Verifique e avalie as receitas pendentes.'});
+    else if(nHoje>0)alerts.push({tipo:'ok',msg:'🟢 Todas as receitas do dia foram avaliadas.',sub:''});
+    document.getElementById('home-alerts').innerHTML=alerts.map(a=>`<div class="al-item ${a.tipo}"><div class="al-dot ${a.tipo==='ok'?'g':a.tipo==='warn'?'y':'r'}"></div><div class="al-txt"><strong>${a.msg}</strong><span>${a.sub}</span></div></div>`).join('');
+  }catch(e){console.error(e)}finally{uld()}
+}
+
+// RECEITAS
+let recCache=[],editRecId=null,formulacoes=[];
+
+function openNovaReceita(){
+  editRecId=null;formulacoes=[];
+  ['r-tipo','r-responsavel','r-pedido-num','r-cliente','r-op-num','r-referencia','r-artigo','r-cor-tecido','r-qtd-pecas','r-obs'].forEach(id=>sv(id,''));
+  sv('r-tipo','producao');renderFormulacoes();
+  document.getElementById('m-rec-title').textContent='Nova Receita';openM('m-receita');
+}
+
+async function buscarPedido(){
+  const num=gv('r-pedido-num').trim();if(!num)return;
+  const{data}=await SB.from('pedidos').select('cliente').eq('numero',num).maybeSingle();
+  if(data)sv('r-cliente',data.cliente);
+}
+
+function addFormulacao(){
+  formulacoes.push({pantone_codigo:'',revisao:1,base_fabricante:'',base_produto_desc:'',base_lote:'',base_data_fab:'',base_quantidade:0,pigmentos:[],tem_migracao:false,bloqueador_prod_desc:'',bloqueador_lote:'',bloqueador_qtd:0,tem_foil:false,foil_prod_desc:'',foil_lote:'',foil_qtd:0,observacoes:''});
+  renderFormulacoes();
+}
+function removeFormulacao(i){formulacoes.splice(i,1);renderFormulacoes()}
+function addPigmento(fi){formulacoes[fi].pigmentos.push({fabricante:'',produto_desc:'',lote:'',data_fab:'',quantidade:0});renderFormulacoes()}
+function removePigmento(fi,pi){formulacoes[fi].pigmentos.splice(pi,1);renderFormulacoes()}
+
+function renderFormulacoes(){
+  const el=document.getElementById('form-list');
+  if(!formulacoes.length){el.innerHTML='<div class="empty" style="padding:20px"><div class="empty-icon">🎨</div><p>Nenhum Pantone adicionado.</p></div>';return}
+  el.innerHTML=formulacoes.map((f,fi)=>`
+    <div class="form-section">
+      <div class="form-section-title">🎨 Cor ${fi+1} <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="removeFormulacao(${fi})">✕</button></div>
+      <div class="fg2" style="margin-bottom:10px">
+        <div class="fg"><label>Código Pantone *</label><input type="text" class="form-input" placeholder="Ex: 17-1622" value="${f.pantone_codigo}" oninput="formulacoes[${fi}].pantone_codigo=this.value"></div>
+        <div class="fg"><label>Revisão</label><input type="number" class="form-input" value="${f.revisao}" min="1" oninput="formulacoes[${fi}].revisao=+this.value"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:7px">Base da Tinta</div>
+      <div class="fg2" style="margin-bottom:10px">
+        <div class="fg"><label>Produto Base *</label><input type="text" class="form-input" placeholder="Ex: Clear, Branco, Binder" value="${f.base_produto_desc}" oninput="formulacoes[${fi}].base_produto_desc=this.value"></div>
+        <div class="fg"><label>Fabricante</label><input type="text" class="form-input" value="${f.base_fabricante}" oninput="formulacoes[${fi}].base_fabricante=this.value"></div>
+        <div class="fg"><label>Lote</label><input type="text" class="form-input" value="${f.base_lote}" oninput="formulacoes[${fi}].base_lote=this.value"></div>
+        <div class="fg"><label>Data Fabricação</label><input type="date" class="form-input" value="${f.base_data_fab}" onchange="formulacoes[${fi}].base_data_fab=this.value"></div>
+        <div class="fg s2"><label>Quantidade (g) *</label><input type="number" class="form-input" step="0.001" value="${f.base_quantidade||''}" oninput="formulacoes[${fi}].base_quantidade=+this.value"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--ink3)">Pigmentos</div>
+        <button class="btn btn-ghost btn-sm" onclick="addPigmento(${fi})">+ Pigmento</button>
+      </div>
+      <div id="pig-list-${fi}">
+        ${f.pigmentos.map((pg,pi)=>`<div class="pig-row">
+          <input type="text" class="form-input" placeholder="Pigmento" value="${pg.produto_desc}" oninput="formulacoes[${fi}].pigmentos[${pi}].produto_desc=this.value" style="flex:2">
+          <input type="text" class="form-input" placeholder="Fabricante" value="${pg.fabricante}" oninput="formulacoes[${fi}].pigmentos[${pi}].fabricante=this.value" style="flex:1.5">
+          <input type="text" class="form-input" placeholder="Lote" value="${pg.lote}" oninput="formulacoes[${fi}].pigmentos[${pi}].lote=this.value" style="flex:1">
+          <input type="number" class="form-input" placeholder="Qtd(g)" step="0.001" value="${pg.quantidade||''}" oninput="formulacoes[${fi}].pigmentos[${pi}].quantidade=+this.value" style="flex:1">
+          <button class="btn btn-danger btn-sm" onclick="removePigmento(${fi},${pi})">✕</button>
+        </div>`).join('')}
+        ${!f.pigmentos.length?'<p style="font-size:12px;color:var(--ink3)">Nenhum pigmento.</p>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:7px;margin:10px 0 6px">
+        <input type="checkbox" id="chk-mig-${fi}" ${f.tem_migracao?'checked':''} onchange="formulacoes[${fi}].tem_migracao=this.checked;renderFormulacoes()" style="width:15px;height:15px;cursor:pointer">
+        <label for="chk-mig-${fi}" style="font-size:13px;font-weight:600;cursor:pointer">Tecido com risco de migração?</label>
+      </div>
+      ${f.tem_migracao?`<div class="fg2" style="margin-bottom:8px">
+        <div class="fg"><label>Bloqueador de Migração</label><input type="text" class="form-input" placeholder="Produto" value="${f.bloqueador_prod_desc}" oninput="formulacoes[${fi}].bloqueador_prod_desc=this.value"></div>
+        <div class="fg"><label>Lote</label><input type="text" class="form-input" value="${f.bloqueador_lote}" oninput="formulacoes[${fi}].bloqueador_lote=this.value"></div>
+        <div class="fg s2"><label>Quantidade (g)</label><input type="number" class="form-input" step="0.001" value="${f.bloqueador_qtd||''}" oninput="formulacoes[${fi}].bloqueador_qtd=+this.value"></div>
+      </div>`:''}
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:7px;margin-bottom:6px">
+        <input type="checkbox" id="chk-foil-${fi}" ${f.tem_foil?'checked':''} onchange="formulacoes[${fi}].tem_foil=this.checked;renderFormulacoes()" style="width:15px;height:15px;cursor:pointer">
+        <label for="chk-foil-${fi}" style="font-size:13px;font-weight:600;cursor:pointer">Utiliza Inibidor de Foil?</label>
+      </div>
+      ${f.tem_foil?`<div class="fg2" style="margin-bottom:8px">
+        <div class="fg"><label>Inibidor de Foil</label><input type="text" class="form-input" placeholder="Produto" value="${f.foil_prod_desc}" oninput="formulacoes[${fi}].foil_prod_desc=this.value"></div>
+        <div class="fg"><label>Lote</label><input type="text" class="form-input" value="${f.foil_lote}" oninput="formulacoes[${fi}].foil_lote=this.value"></div>
+        <div class="fg s2"><label>Quantidade (g)</label><input type="number" class="form-input" step="0.001" value="${f.foil_qtd||''}" oninput="formulacoes[${fi}].foil_qtd=+this.value"></div>
+      </div>`:''}
+      <div style="background:var(--navy-pale);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px;margin-top:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--navy)">⚖️ Escalonar para:</span>
+        <input type="number" id="escala-peso-${fi}" class="form-input" placeholder="Ex: 2000" step="0.1" style="max-width:110px;font-size:12px;padding:5px 8px">
+        <span style="font-size:12px;color:var(--ink3)">g</span>
+        <button class="btn btn-navy btn-sm" onclick="escalonar(${fi})">Calcular</button>
+      </div>
+      <div id="escala-res-${fi}"></div>
+    </div>`).join('');
+}
+
+function escalonar(fi){
+  const peso=+document.getElementById(`escala-peso-${fi}`)?.value;
+  if(!peso||peso<=0){alert('Informe um peso válido.');return}
+  const f=formulacoes[fi];
+  let pesoOrig=f.base_quantidade||0;
+  f.pigmentos.forEach(p=>pesoOrig+=(+p.quantidade||0));
+  pesoOrig+=(f.tem_migracao?+f.bloqueador_qtd||0:0)+(f.tem_foil?+f.foil_qtd||0:0);
+  if(!pesoOrig){alert('Peso original é zero. Preencha as quantidades.');return}
+  const fator=peso/pesoOrig;
+  const rows=[];
+  rows.push({tipo:'Base',desc:f.base_produto_desc||'—',orig:f.base_quantidade,nova:+(f.base_quantidade*fator).toFixed(4)});
+  f.pigmentos.forEach(p=>rows.push({tipo:'Pigmento',desc:p.produto_desc||'—',orig:p.quantidade,nova:+(p.quantidade*fator).toFixed(4)}));
+  if(f.tem_migracao&&f.bloqueador_qtd)rows.push({tipo:'Bloqueador',desc:f.bloqueador_prod_desc||'—',orig:f.bloqueador_qtd,nova:+(f.bloqueador_qtd*fator).toFixed(4)});
+  if(f.tem_foil&&f.foil_qtd)rows.push({tipo:'Foil',desc:f.foil_prod_desc||'—',orig:f.foil_qtd,nova:+(f.foil_qtd*fator).toFixed(4)});
+  document.getElementById(`escala-res-${fi}`).innerHTML=`<div class="escala-resultado">
+    <h4>Escalonado: ${pesoOrig}g → ${peso}g (fator ${fator.toFixed(4)})</h4>
+    ${rows.map(r=>`<div class="escala-row"><span class="er-tipo">${r.tipo}</span><span class="er-desc">${r.desc}</span><span class="er-orig">${r.orig}g</span><span class="er-new">→ ${r.nova}g</span></div>`).join('')}
+    <div style="text-align:right;font-size:11px;color:var(--green);margin-top:6px;font-weight:700">Total: ${rows.reduce((a,r)=>a+r.nova,0).toFixed(4)}g</div>
+  </div>`;
+}
+
+async function saveReceita(){
+  const pedNum=gv('r-pedido-num').trim(),opNum=gv('r-op-num').trim();
+  if(!pedNum||!opNum){alert('Pedido e OP são obrigatórios.');return}
+  if(!formulacoes.length){alert('Adicione ao menos uma formulação.');return}
+  ld('Salvando receita...');
+  try{
+    let{data:ped}=await SB.from('pedidos').select('id').eq('numero',pedNum).maybeSingle();
+    if(!ped){const{data:np,error:pe}=await SB.from('pedidos').insert({numero:pedNum,cliente:gv('r-cliente')||pedNum,quantidade_total:+gv('r-qtd-pecas')||0,artigo:gv('r-artigo'),updated_by:CU.nome}).select('id').single();if(pe)throw pe;ped=np}
+    let{data:op}=await SB.from('ordens_producao').select('id').eq('pedido_id',ped.id).eq('numero_op',opNum).maybeSingle();
+    if(!op){const{data:nop,error:ope}=await SB.from('ordens_producao').insert({pedido_id:ped.id,numero_op:opNum,referencia:gv('r-referencia'),cor_tecido:gv('r-cor-tecido'),quantidade:+gv('r-qtd-pecas')||0,updated_by:CU.nome}).select('id').single();if(ope)throw ope;op=nop}
+    const recData={tipo:gv('r-tipo'),pedido_id:ped.id,op_id:op.id,responsavel:gv('r-responsavel'),observacoes:gv('r-obs'),updated_by:CU.nome};
+    let recId;
+    if(editRecId){const{error}=await SB.from('receitas').update(recData).eq('id',editRecId);if(error)throw error;recId=editRecId;await SB.from('formulacoes').delete().eq('receita_id',recId)}
+    else{const{data:rec,error}=await SB.from('receitas').insert(recData).select('id').single();if(error)throw error;recId=rec.id}
+    for(const f of formulacoes){
+      if(!f.pantone_codigo)continue;
+      let{data:pan}=await SB.from('pantones').select('id').eq('codigo',f.pantone_codigo.trim()).maybeSingle();
+      if(!pan){const{data:np,error:pe}=await SB.from('pantones').insert({codigo:f.pantone_codigo.trim(),descricao:f.pantone_codigo.trim(),updated_by:CU.nome}).select('id').single();if(pe)throw pe;pan=np}
+      const{error:fe}=await SB.from('formulacoes').insert({receita_id:recId,pantone_id:pan.id,revisao:f.revisao||1,base_fabricante:f.base_fabricante,base_produto_desc:f.base_produto_desc,base_lote:f.base_lote,base_data_fab:f.base_data_fab||null,base_quantidade:f.base_quantidade||0,pigmentos:JSON.stringify(f.pigmentos),tem_migracao:f.tem_migracao,bloqueador_prod_desc:f.bloqueador_prod_desc,bloqueador_lote:f.bloqueador_lote,bloqueador_qtd:f.bloqueador_qtd||null,tem_foil:f.tem_foil,foil_prod_desc:f.foil_prod_desc,foil_lote:f.foil_lote,foil_qtd:f.foil_qtd||null,observacoes:f.observacoes,updated_by:CU.nome});
+      if(fe)throw fe;
+    }
+    closeM('m-receita');await renderReceitas();
+  }catch(e){alert('Erro: '+e.message)}finally{uld();editRecId=null}
+}
+
+async function renderReceitas(){
+  ld('Carregando receitas...');
+  const{data}=await SB.from('receitas').select('*,pedidos(numero,cliente),ordens_producao(numero_op,referencia),formulacoes(revisao,pantones(codigo,descricao)),avaliacoes_qualidade(status)').order('created_at',{ascending:false});
+  recCache=data||[];uld();
+  const q=(gv('q-rec')||'').toLowerCase().trim(),tipo=gv('f-rec-tipo'),qual=gv('f-rec-qual'),dt=gv('f-rec-dt');
+  let items=recCache.filter(r=>{
+    if(tipo&&r.tipo!==tipo)return false;
+    if(qual){const st=r.avaliacoes_qualidade?.[0]?.status||'aguardando';if(st!==qual)return false}
+    if(dt&&!r.created_at?.startsWith(dt))return false;
+    if(q){const pans=(r.formulacoes||[]).map(f=>f.pantones?.codigo+' '+f.pantones?.descricao).join(' ');if(![r.pedidos?.numero,r.pedidos?.cliente,r.ordens_producao?.numero_op,r.ordens_producao?.referencia,r.responsavel,pans].join(' ').toLowerCase().includes(q))return false}
+    return true;
+  });
+  const tot=recCache.length,aprov=recCache.filter(r=>r.avaliacoes_qualidade?.[0]?.status==='aprovada').length;
+  const pend=recCache.filter(r=>!r.avaliacoes_qualidade?.length||r.avaliacoes_qualidade[0]?.status==='aguardando').length;
+  const reprov=recCache.filter(r=>r.avaliacoes_qualidade?.[0]?.status==='reprovada').length;
+  document.getElementById('rec-stats').innerHTML=`<div class="smi"><div class="smi-v">${tot}</div><div class="smi-l">Total</div></div><div class="smi ok"><div class="smi-v">${aprov}</div><div class="smi-l">Aprovadas</div></div><div class="smi warn"><div class="smi-v">${pend}</div><div class="smi-l">Pendentes</div></div><div class="smi bad"><div class="smi-v">${reprov}</div><div class="smi-l">Reprovadas</div></div><div class="smi"><div class="smi-v">${items.length}</div><div class="smi-l">Filtrados</div></div>`;
+  const grid=document.getElementById('rec-grid');
+  if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Nenhuma receita encontrada.</p></div>';return}
+  const st=r=>(r.avaliacoes_qualidade?.[0]?.status)||'aguardando';
+  grid.innerHTML=items.map(r=>`<div class="rc ${st(r)==='reprovada'?'reprovada':''}" onclick="openDetReceita('${r.id}')">
+    ${st(r)==='reprovada'?'<div class="reprovada-banner" style="margin:-14px -16px 10px;border-radius:8px 8px 0 0;padding:8px 14px;font-size:12px">🔴 REPROVADA PELA QUALIDADE</div>':''}
+    <div class="rc-top"><span class="rc-num">Ped. ${r.pedidos?.numero||'—'}</span><span class="rc-op">OP ${r.ordens_producao?.numero_op||'—'}</span><span class="tag t-navy" style="font-size:10px">${r.tipo==='amostra'?'Amostra':'Produção'}</span><span style="margin-left:auto">${statusTag(st(r))}</span></div>
+    <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">📦 ${r.pedidos?.cliente||'—'} · ${r.ordens_producao?.referencia||'—'}</div>
+    <div class="rc-tags">${(r.formulacoes||[]).map(f=>`<span class="tag t-navy">🎨 PMS ${f.pantones?.codigo||'?'}</span>`).join('')}</div>
+    <div style="font-size:11px;color:var(--ink3);margin-top:8px;display:flex;justify-content:space-between"><span>👤 ${r.responsavel||'—'}</span><span>${fmtDt(r.created_at)}</span></div>
+  </div>`).join('');
+}
+
+function clearFRec(){['q-rec','f-rec-tipo','f-rec-qual','f-rec-dt'].forEach(id=>sv(id,''));renderReceitas()}
+
+async function openDetReceita(id){
+  const r=recCache.find(x=>x.id===id);if(!r)return;
+  const st=(r.avaliacoes_qualidade?.[0]?.status)||'aguardando';
+  document.getElementById('m-det-rec-title').textContent=`Ped. ${r.pedidos?.numero||'—'} · OP ${r.ordens_producao?.numero_op||'—'}`;
+  const fList=(r.formulacoes||[]).map(f=>`<div style="background:var(--bg);border-radius:8px;padding:10px 13px;margin-bottom:8px"><div style="font-weight:700;font-size:14px;color:var(--navy)">🎨 PMS ${f.pantones?.codigo||'?'} — ${f.pantones?.descricao||'—'} <span style="font-size:11px;color:var(--ink3)">Rev.${f.revisao}</span></div></div>`).join('');
+  document.getElementById('m-det-rec-body').innerHTML=`
+    ${st==='reprovada'?'<div class="reprovada-banner">🔴 REPROVADA PELA QUALIDADE</div>':''}
+    <div class="detrow">
+      <div class="di"><div class="lbl">Pedido</div><div class="val">${r.pedidos?.numero||'—'}</div></div>
+      <div class="di"><div class="lbl">OP</div><div class="val">${r.ordens_producao?.numero_op||'—'}</div></div>
+      <div class="di"><div class="lbl">Cliente</div><div class="val">${r.pedidos?.cliente||'—'}</div></div>
+      <div class="di"><div class="lbl">Referência</div><div class="val">${r.ordens_producao?.referencia||'—'}</div></div>
+      <div class="di"><div class="lbl">Tipo</div><div class="val">${r.tipo==='amostra'?'Amostra':'Produção'}</div></div>
+      <div class="di"><div class="lbl">Responsável</div><div class="val">${r.responsavel||'—'}</div></div>
+      <div class="di"><div class="lbl">Cadastrada em</div><div class="val">${fmtDtHr(r.created_at)}</div></div>
+      <div class="di"><div class="lbl">Qualidade</div><div class="val">${statusTag(st)}</div></div>
+    </div>
+    <div class="st-title">Formulações</div>${fList}
+    ${r.observacoes?`<div class="st-title">Observações</div><p style="font-size:13px;color:var(--ink2)">${r.observacoes}</p>`:''}`;
+  document.getElementById('det-rec-edit').onclick=()=>{closeM('m-det-receita');editReceita(id)};
+  document.getElementById('det-rec-del').onclick=async()=>{if(!isAdm()||!confirm('Excluir esta receita?'))return;ld('Excluindo...');await SB.from('receitas').delete().eq('id',id);uld();closeM('m-det-receita');await renderReceitas()};
+  openM('m-det-receita');
+}
+
+async function editReceita(id){
+  if(!isAdm())return;
+  const r=recCache.find(x=>x.id===id);if(!r)return;
+  editRecId=id;
+  sv('r-tipo',r.tipo);sv('r-responsavel',r.responsavel);sv('r-obs',r.observacoes);
+  sv('r-pedido-num',r.pedidos?.numero);sv('r-cliente',r.pedidos?.cliente);
+  sv('r-op-num',r.ordens_producao?.numero_op);sv('r-referencia',r.ordens_producao?.referencia);
+  const{data:fData}=await SB.from('formulacoes').select('*,pantones(codigo)').eq('receita_id',id);
+  formulacoes=(fData||[]).map(f=>({pantone_codigo:f.pantones?.codigo||'',revisao:f.revisao,base_fabricante:f.base_fabricante||'',base_produto_desc:f.base_produto_desc||'',base_lote:f.base_lote||'',base_data_fab:f.base_data_fab||'',base_quantidade:f.base_quantidade||0,pigmentos:typeof f.pigmentos==='string'?JSON.parse(f.pigmentos):f.pigmentos||[],tem_migracao:f.tem_migracao||false,bloqueador_prod_desc:f.bloqueador_prod_desc||'',bloqueador_lote:f.bloqueador_lote||'',bloqueador_qtd:f.bloqueador_qtd||0,tem_foil:f.tem_foil||false,foil_prod_desc:f.foil_prod_desc||'',foil_lote:f.foil_lote||'',foil_qtd:f.foil_qtd||0,observacoes:f.observacoes||''}));
+  renderFormulacoes();document.getElementById('m-rec-title').textContent='Editar Receita';openM('m-receita');
+}
+
+// PANTONES
+let panCache=[],editPanId=null;
+function openNovoPantone(){editPanId=null;['p-codigo','p-descricao','p-obs'].forEach(id=>sv(id,''));document.getElementById('m-pan-title').textContent='Novo Pantone';openM('m-pantone')}
+async function savePantone(){
+  const cod=gv('p-codigo').trim(),desc=gv('p-descricao').trim();
+  if(!cod||!desc){alert('Código e descrição obrigatórios.');return}
+  ld('Salvando...');
+  try{
+    const row={codigo:cod,descricao:desc,observacoes:gv('p-obs'),updated_by:CU.nome};
+    if(editPanId){const{error}=await SB.from('pantones').update(row).eq('id',editPanId);if(error)throw error}
+    else{const{error}=await SB.from('pantones').insert(row);if(error)throw error}
+    closeM('m-pantone');await renderPantones();
+  }catch(e){alert('Erro: '+e.message)}finally{uld();editPanId=null}
+}
+async function renderPantones(){
+  ld('Carregando Pantones...');
+  const[{data:pans},{data:conf}]=await Promise.all([SB.from('pantones').select('*').order('codigo'),SB.from('vw_confiabilidade_pantone').select('*')]);
+  panCache=pans||[];uld();
+  const confMap={};(conf||[]).forEach(c=>confMap[c.id]=c);
+  const q=(gv('q-pan')||'').toLowerCase().trim();
+  const items=panCache.filter(p=>!q||(p.codigo+' '+p.descricao).toLowerCase().includes(q));
+  document.getElementById('pan-stats').innerHTML=`<div class="smi"><div class="smi-v">${panCache.length}</div><div class="smi-l">Total Pantones</div></div><div class="smi"><div class="smi-v">${items.length}</div><div class="smi-l">Filtrados</div></div>`;
+  const grid=document.getElementById('pan-grid');
+  if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🎨</div><p>Nenhum Pantone encontrado.</p></div>';return}
+  grid.innerHTML=items.map(p=>{
+    const c=confMap[p.id]||{};const cp=c.confiabilidade_pct??null;
+    const cc=cp===null?'var(--ink3)':cp>=95?'var(--green)':cp>=80?'var(--yellow)':'var(--red)';
+    return `<div class="pantone-card"><div class="pc-stripe" style="background:linear-gradient(90deg,var(--navy),var(--green))"></div><div class="pc-body">
+      <div class="pc-code">PMS ${p.codigo}</div><div class="pc-name">${p.descricao}</div>
+      <div class="pc-meta"><div class="pc-meta-item"><div class="lbl">Utilizações</div><div class="val">${c.total_usos||0}</div></div><div class="pc-meta-item"><div class="lbl">Revisão</div><div class="val">Rev.${c.revisao_atual||1}</div></div></div>
+      <div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:${cp??0}%;background:${cc}"></div></div><span class="conf-val" style="color:${cc}">${cp!==null?cp+'%':'—'}</span></div>
+      <div class="pc-actions"><button class="btn btn-navy btn-sm" onclick="openDetPantone('${p.id}')">🔍 Revisões</button><button class="btn btn-ghost btn-sm adm" onclick="editPantone('${p.id}')">✏️</button><button class="btn btn-danger btn-sm adm" onclick="delPantone('${p.id}','${p.codigo}')">✕</button></div>
+    </div></div>`;
+  }).join('');
+}
+function editPantone(id){if(!isAdm())return;const p=panCache.find(x=>x.id===id);if(!p)return;editPanId=id;sv('p-codigo',p.codigo);sv('p-descricao',p.descricao);sv('p-obs',p.observacoes);document.getElementById('m-pan-title').textContent='Editar Pantone';openM('m-pantone')}
+async function delPantone(id,cod){if(!isAdm()||!confirm(`Excluir PMS ${cod}?`))return;ld('Excluindo...');await SB.from('pantones').delete().eq('id',id);uld();await renderPantones()}
+async function openDetPantone(id){
+  const p=panCache.find(x=>x.id===id);if(!p)return;
+  ld('Carregando revisões...');
+  const{data:revs}=await SB.from('vw_revisoes_pantone').select('*').eq('pantone_id',id).order('revisao',{ascending:false});
+  uld();
+  document.getElementById('m-det-pan-title').textContent=`PMS ${p.codigo} — ${p.descricao}`;
+  const revList=(revs||[]).length?(revs||[]).map(r=>`<div style="background:var(--bg);border-radius:8px;padding:10px 13px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-weight:700;color:var(--navy)">Rev.${r.revisao}</span><span style="font-size:11px;color:var(--ink3)">${fmtDt(r.created_at)} · ${r.updated_by||'—'}</span><span style="font-size:11px;color:var(--ink3);margin-left:auto">Ped. ${r.pedido_numero||'—'} · OP ${r.numero_op||'—'}</span></div>
+    <div class="detrow"><div class="di"><div class="lbl">Base</div><div class="val">${r.base_produto_desc||'—'}</div></div><div class="di"><div class="lbl">Qtd Base</div><div class="val">${r.base_quantidade||0}g</div></div></div>
+    ${(typeof r.pigmentos==='string'?JSON.parse(r.pigmentos||'[]'):r.pigmentos||[]).map(pg=>`<div class="code-row"><span class="code-lbl">${pg.produto_desc||'—'}</span><span class="code-val">${pg.quantidade}g</span><span style="font-size:11px;color:var(--ink3);margin-left:6px">Lote: ${pg.lote||'—'}</span></div>`).join('')}
+  </div>`).join(''):'<p style="color:var(--ink3);font-size:13px">Nenhuma revisão encontrada.</p>';
+  document.getElementById('m-det-pan-body').innerHTML=`<div class="detrow"><div class="di"><div class="lbl">Código</div><div class="val">PMS ${p.codigo}</div></div><div class="di"><div class="lbl">Descrição</div><div class="val">${p.descricao}</div></div></div><div class="st-title">Histórico de Revisões</div>${revList}${p.observacoes?`<div class="st-title">Observações</div><p style="font-size:13px;color:var(--ink2)">${p.observacoes}</p>`:''}`;
+  openM('m-det-pantone');
+}
+
+// QUALIDADE
+let qualCache=[],editAvId=null;
+function openNovaAvaliacao(){editAvId=null;['av-receita-ref','av-responsavel','av-obs'].forEach(id=>sv(id,''));sv('av-status','aguardando');sv('av-data',new Date().toISOString().slice(0,10));renderMotivos();toggleMotivoReprov();document.getElementById('m-av-title').textContent='Nova Avaliação';openM('m-avaliacao')}
+function renderMotivos(){document.getElementById('av-motivos-list').innerHTML=MOTIVOS_REPROV.map(m=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:3px 0"><input type="checkbox" value="${m}" style="width:14px;height:14px"> ${m}</label>`).join('')}
+function toggleMotivoReprov(){const v=gv('av-status');document.getElementById('av-motivos-wrap').style.display=(v==='reprovada'||v==='aprovada_restricao')?'':'none'}
+async function saveAvaliacao(){
+  const ref=gv('av-receita-ref').trim(),resp=gv('av-responsavel').trim(),st=gv('av-status');
+  if(!resp){alert('Informe o responsável.');return}
+  const motivos=[...document.querySelectorAll('#av-motivos-list input:checked')].map(c=>c.value);
+  ld('Salvando avaliação...');
+  try{
+    let recId=null;
+    if(ref.includes('/')){
+      const parts=ref.split('/');const pedNum=parts[0].trim();const opNum=parts[1].trim().replace(/^op\s*/i,'');
+      const{data:ped}=await SB.from('pedidos').select('id').eq('numero',pedNum).maybeSingle();
+      if(ped){const{data:op}=await SB.from('ordens_producao').select('id').eq('pedido_id',ped.id).ilike('numero_op','%'+opNum+'%').maybeSingle();if(op){const{data:rec}=await SB.from('receitas').select('id').eq('op_id',op.id).order('created_at',{ascending:false}).limit(1).maybeSingle();if(rec)recId=rec.id}}
+    }
+    const row={receita_id:recId,responsavel:resp,status:st,motivos:JSON.stringify(motivos),restricoes:gv('av-obs'),data_avaliacao:gv('av-data')||null,updated_by:CU.nome};
+    if(editAvId){const{error}=await SB.from('avaliacoes_qualidade').update(row).eq('id',editAvId);if(error)throw error}
+    else{const{error}=await SB.from('avaliacoes_qualidade').insert(row);if(error)throw error}
+    closeM('m-avaliacao');await renderQualidade();
+  }catch(e){alert('Erro: '+e.message)}finally{uld();editAvId=null}
+}
+async function renderQualidade(){
+  ld('Carregando avaliações...');
+  const{data}=await SB.from('avaliacoes_qualidade').select('*,receitas(pedidos(numero,cliente),ordens_producao(numero_op,referencia),formulacoes(pantones(codigo)))').order('created_at',{ascending:false});
+  qualCache=data||[];uld();
+  const q=(gv('q-qual')||'').toLowerCase().trim(),st=gv('f-qual-st');
+  const items=qualCache.filter(a=>{
+    if(st&&a.status!==st)return false;
+    if(q){const pans=(a.receitas?.formulacoes||[]).map(f=>f.pantones?.codigo).join(' ');if(![a.receitas?.pedidos?.numero,a.receitas?.pedidos?.cliente,a.receitas?.ordens_producao?.numero_op,a.responsavel,pans].join(' ').toLowerCase().includes(q))return false}
+    return true;
+  });
+  const sc={aguardando:0,aprovada:0,aprovada_restricao:0,reprovada:0};
+  qualCache.forEach(a=>sc[a.status]=(sc[a.status]||0)+1);
+  document.getElementById('qual-stats').innerHTML=`<div class="smi warn"><div class="smi-v">${sc.aguardando}</div><div class="smi-l">Aguardando</div></div><div class="smi ok"><div class="smi-v">${sc.aprovada}</div><div class="smi-l">Aprovadas</div></div><div class="smi"><div class="smi-v">${sc.aprovada_restricao}</div><div class="smi-l">C/ Restrição</div></div><div class="smi bad"><div class="smi-v">${sc.reprovada}</div><div class="smi-l">Reprovadas</div></div>`;
+  const tbody=document.getElementById('qual-tbody');
+  if(!items.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--ink3)">Nenhuma avaliação encontrada.</td></tr>';return}
+  const motArr=a=>typeof a.motivos==='string'?JSON.parse(a.motivos):a.motivos||[];
+  tbody.innerHTML=items.map(a=>`<tr>
+    <td style="font-weight:700;color:var(--navy)">${a.receitas?.pedidos?.numero||'—'}</td>
+    <td>${a.receitas?.ordens_producao?.numero_op||'—'}</td>
+    <td>${a.receitas?.ordens_producao?.referencia||'—'}</td>
+    <td>${(a.receitas?.formulacoes||[]).map(f=>`<span class="tag t-navy" style="font-size:10px">PMS ${f.pantones?.codigo||'?'}</span>`).join(' ')}</td>
+    <td>${a.responsavel||'—'}</td>
+    <td style="color:var(--ink3);font-size:12px">${fmtDt(a.data_avaliacao||a.created_at)}</td>
+    <td>${statusTag(a.status)}${motArr(a).length?`<br><span style="font-size:10px;color:var(--red)">${motArr(a).slice(0,2).join(', ')}${motArr(a).length>2?'…':''}</span>`:''}</td>
+    <td class="adm"><div class="actions"><button class="btn btn-ghost btn-sm" onclick="editAvaliacao('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delAvaliacao('${a.id}')">✕</button></div></td>
+  </tr>`).join('');
+}
+async function editAvaliacao(id){if(!isAdm())return;const a=qualCache.find(x=>x.id===id);if(!a)return;editAvId=id;sv('av-responsavel',a.responsavel);sv('av-status',a.status);sv('av-data',a.data_avaliacao?.slice(0,10)||'');sv('av-obs',a.restricoes);renderMotivos();toggleMotivoReprov();const m=typeof a.motivos==='string'?JSON.parse(a.motivos):a.motivos||[];document.querySelectorAll('#av-motivos-list input').forEach(cb=>{if(m.includes(cb.value))cb.checked=true});document.getElementById('m-av-title').textContent='Editar Avaliação';openM('m-avaliacao')}
+async function delAvaliacao(id){if(!isAdm()||!confirm('Excluir?'))return;ld('Excluindo...');await SB.from('avaliacoes_qualidade').delete().eq('id',id);uld();await renderQualidade()}
+
+// PRODUTOS
+let prodCache=[],editProdId=null;
+function openNovoProduto(){editProdId=null;['pr-descricao','pr-fabricante','pr-lote','pr-quantidade','pr-data-fab','pr-obs'].forEach(id=>sv(id,''));sv('pr-categoria','tinta');sv('pr-unidade','g');document.getElementById('m-prod-title').textContent='Novo Produto';openM('m-produto')}
+async function saveProduto(){
+  const desc=gv('pr-descricao').trim(),fab=gv('pr-fabricante').trim();
+  if(!desc||!fab){alert('Descrição e fabricante obrigatórios.');return}
+  ld('Salvando...');
+  try{const row={categoria:gv('pr-categoria'),descricao:desc,fabricante:fab,lote:gv('pr-lote'),quantidade:+gv('pr-quantidade')||null,unidade:gv('pr-unidade'),data_fabricacao:gv('pr-data-fab')||null,updated_by:CU.nome};if(editProdId){const{error}=await SB.from('produtos').update(row).eq('id',editProdId);if(error)throw error}else{const{error}=await SB.from('produtos').insert(row);if(error)throw error}closeM('m-produto');await renderProdutos()}catch(e){alert('Erro: '+e.message)}finally{uld();editProdId=null}
+}
+async function renderProdutos(){
+  ld('Carregando...');const{data}=await SB.from('produtos').select('*').order('categoria').order('descricao');prodCache=data||[];uld();
+  const q=(gv('q-prod')||'').toLowerCase().trim(),cat=gv('f-prod-cat');
+  const items=prodCache.filter(p=>{if(cat&&p.categoria!==cat)return false;if(q&&![p.descricao,p.fabricante,p.lote].join(' ').toLowerCase().includes(q))return false;return true});
+  document.getElementById('prod-stats').innerHTML=`<div class="smi"><div class="smi-v">${prodCache.filter(p=>p.categoria==='tinta').length}</div><div class="smi-l">Tintas</div></div><div class="smi"><div class="smi-v">${prodCache.filter(p=>p.categoria==='pigmento').length}</div><div class="smi-l">Pigmentos</div></div><div class="smi"><div class="smi-v">${prodCache.filter(p=>p.categoria==='produto_auxiliar').length}</div><div class="smi-l">Auxiliares</div></div><div class="smi"><div class="smi-v">${items.length}</div><div class="smi-l">Filtrados</div></div>`;
+  const tbody=document.getElementById('prod-tbody');
+  if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink3)">Nenhum produto encontrado.</td></tr>';return}
+  tbody.innerHTML=items.map(p=>`<tr><td><span class="tag t-navy">${CAT_PROD_LABEL[p.categoria]||p.categoria}</span></td><td style="font-weight:600">${p.descricao}</td><td>${p.fabricante}</td><td style="font-size:12px;color:var(--ink3)">${p.lote||'—'}</td><td style="font-size:12px">${p.quantidade!=null?p.quantidade+' '+p.unidade:'—'}</td><td style="font-size:12px;color:var(--ink3)">${fmtDt(p.data_fabricacao)}</td><td class="adm"><div class="actions"><button class="btn btn-ghost btn-sm" onclick="editProduto('${p.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delProduto('${p.id}')">✕</button></div></td></tr>`).join('');
+}
+function editProduto(id){if(!isAdm())return;const p=prodCache.find(x=>x.id===id);if(!p)return;editProdId=id;sv('pr-categoria',p.categoria);sv('pr-descricao',p.descricao);sv('pr-fabricante',p.fabricante);sv('pr-lote',p.lote);sv('pr-quantidade',p.quantidade);sv('pr-unidade',p.unidade||'g');sv('pr-data-fab',p.data_fabricacao?.slice(0,10)||'');sv('pr-obs',p.observacoes);document.getElementById('m-prod-title').textContent='Editar Produto';openM('m-produto')}
+async function delProduto(id){if(!isAdm()||!confirm('Excluir produto?'))return;ld('Excluindo...');await SB.from('produtos').delete().eq('id',id);uld();await renderProdutos()}
+
+// FORNECEDORES
+let fornCache=[],editFornId=null;
+function openNovoFornecedor(){editFornId=null;['fn-nome','fn-contato','fn-tel','fn-email','fn-cidade','fn-estado'].forEach(id=>sv(id,''));sv('fn-categoria','tintas');document.getElementById('m-forn-title').textContent='Novo Fornecedor';openM('m-fornecedor')}
+async function saveFornecedor(){
+  const nome=gv('fn-nome').trim();if(!nome){alert('Nome da empresa obrigatório.');return}
+  ld('Salvando...');
+  try{const row={nome_empresa:nome,categoria:gv('fn-categoria'),contato:gv('fn-contato'),telefone:gv('fn-tel'),email:gv('fn-email'),cidade:gv('fn-cidade'),estado:gv('fn-estado').toUpperCase()||null,updated_by:CU.nome};if(editFornId){const{error}=await SB.from('fornecedores').update(row).eq('id',editFornId);if(error)throw error}else{const{error}=await SB.from('fornecedores').insert(row);if(error)throw error}closeM('m-fornecedor');await renderFornecedores()}catch(e){alert('Erro: '+e.message)}finally{uld();editFornId=null}
+}
+async function renderFornecedores(){
+  ld('Carregando...');const{data}=await SB.from('fornecedores').select('*').order('nome_empresa');fornCache=data||[];uld();
+  const q=(gv('q-forn')||'').toLowerCase().trim();
+  const items=fornCache.filter(f=>!q||[f.nome_empresa,f.cidade,f.contato,f.email].join(' ').toLowerCase().includes(q));
+  const tbody=document.getElementById('forn-tbody');
+  if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink3)">Nenhum fornecedor encontrado.</td></tr>';return}
+  tbody.innerHTML=items.map(f=>`<tr><td style="font-weight:700;color:var(--navy)">${f.nome_empresa}</td><td><span class="tag t-type">${CAT_FORN_LABEL[f.categoria]||f.categoria}</span></td><td style="font-size:12px">${[f.cidade,f.estado].filter(Boolean).join('/')}</td><td style="font-size:12px">${f.contato||'—'}</td><td style="font-size:12px">${f.telefone||'—'}</td><td style="font-size:12px">${f.email||'—'}</td><td class="adm"><div class="actions"><button class="btn btn-ghost btn-sm" onclick="editFornecedor('${f.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delFornecedor('${f.id}')">✕</button></div></td></tr>`).join('');
+}
+function editFornecedor(id){if(!isAdm())return;const f=fornCache.find(x=>x.id===id);if(!f)return;editFornId=id;sv('fn-nome',f.nome_empresa);sv('fn-categoria',f.categoria);sv('fn-contato',f.contato);sv('fn-tel',f.telefone);sv('fn-email',f.email);sv('fn-cidade',f.cidade);sv('fn-estado',f.estado);document.getElementById('m-forn-title').textContent='Editar Fornecedor';openM('m-fornecedor')}
+async function delFornecedor(id){if(!isAdm()||!confirm('Excluir fornecedor?'))return;ld('Excluindo...');await SB.from('fornecedores').delete().eq('id',id);uld();await renderFornecedores()}
+
+// USUÁRIOS
+let editUsrId=null;
+async function renderUsuarios(){
+  ld('Carregando...');const{data}=await SB.from('usuarios').select('*').order('nome');uld();
+  document.getElementById('usr-grid').innerHTML=(data||[]).map(u=>{
+    const ci=u.nome.charCodeAt(0)%COLORS_AV.length;const isSelf=CU&&u.id===CU.id;
+    return `<div class="usr-card"><div class="nav-av" style="background:${COLORS_AV[ci]};width:38px;height:38px;font-size:15px;flex-shrink:0">${u.nome.charAt(0).toUpperCase()}</div><div style="flex:1"><div class="usr-n">${u.nome}${isSelf?' <span style="font-size:10px;color:var(--ink3)">(você)</span>':''}</div><div class="usr-u">@${u.username}</div><span class="usr-r ${u.role==='admin'?'r-adm':'r-view'}">${u.role==='admin'?'👑 Administrador':'👁️ Visualizador'}</span></div><div class="actions"><button class="btn btn-ghost btn-sm" onclick="editUsr('${u.id}')">✏️</button>${!isSelf?`<button class="btn btn-danger btn-sm" onclick="delUsr('${u.id}')">✕</button>`:''}</div></div>`;
+  }).join('');
+}
+function openNovoUsuario(){editUsrId=null;['u-nome','u-user','u-pass','u-pass2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});sv('u-role','viewer');document.getElementById('u-pw-wrap').style.display='flex';document.getElementById('u-pw-edit').style.display='none';document.getElementById('m-usr-title').textContent='Novo Usuário';openM('m-usuario')}
+async function saveUsuario(){
+  const nome=gv('u-nome').trim(),username=gv('u-user').trim().toLowerCase(),role=gv('u-role');
+  if(!nome||!username){alert('Preencha nome e usuário.');return}
+  ld('Salvando...');
+  try{
+    if(editUsrId){const row={nome,username,role};const np=gv('u-pass2');if(np&&np.length>=4)row.pass_hash=hp(np);const{error}=await SB.from('usuarios').update(row).eq('id',editUsrId);if(error)throw error}
+    else{const pass=gv('u-pass');if(!pass||pass.length<4){alert('Senha mínima: 4 caracteres.');return}const{error}=await SB.from('usuarios').insert({nome,username,pass_hash:hp(pass),role});if(error)throw error}
+    closeM('m-usuario');await renderUsuarios();
+  }catch(e){alert('Erro: '+e.message)}finally{uld();editUsrId=null}
+}
+async function editUsr(id){ld('...');const{data:u}=await SB.from('usuarios').select('*').eq('id',id).single();uld();if(!u)return;editUsrId=id;sv('u-nome',u.nome);sv('u-user',u.username);sv('u-role',u.role);['u-pass','u-pass2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});document.getElementById('u-pw-wrap').style.display='none';document.getElementById('u-pw-edit').style.display='flex';document.getElementById('m-usr-title').textContent='Editar Usuário';openM('m-usuario')}
+async function delUsr(id){if(id===CU?.id){alert('Não é possível excluir seu próprio usuário.');return}if(!confirm('Excluir usuário?'))return;ld('Excluindo...');await SB.from('usuarios').delete().eq('id',id);uld();await renderUsuarios()}
+
+// BACKUP
+async function updateBkStats(){
+  const[{count:rc},{count:pc},{count:fc}]=await Promise.all([SB.from('receitas').select('*',{count:'exact',head:true}),SB.from('pantones').select('*',{count:'exact',head:true}),SB.from('formulacoes').select('*',{count:'exact',head:true})]);
+  const el=document.getElementById('bk-stats');if(el)el.innerHTML=`<strong>ℹ️ Dados no Supabase:</strong> ${rc||0} receita(s) · ${pc||0} Pantone(s) · ${fc||0} formulação(ões).`;
+}
+async function exportBk(){
+  ld('Exportando...');
+  const[{data:rec},{data:pan},{data:form},{data:ped},{data:ops},{data:prod},{data:forn},{data:qual},{data:usr}]=await Promise.all([SB.from('receitas').select('*'),SB.from('pantones').select('*'),SB.from('formulacoes').select('*'),SB.from('pedidos').select('*'),SB.from('ordens_producao').select('*'),SB.from('produtos').select('*'),SB.from('fornecedores').select('*'),SB.from('avaliacoes_qualidade').select('*'),SB.from('usuarios').select('id,nome,username,role,created_at')]);uld();
+  const blob=new Blob([JSON.stringify({receitas:rec,pantones:pan,formulacoes:form,pedidos:ped,ordens_producao:ops,produtos:prod,fornecedores:forn,avaliacoes_qualidade:qual,usuarios:usr,exportedAt:new Date().toISOString(),version:'1.0-sri'},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`sri-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();closeM('m-backup');
+}
+async function importBk(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.receitas&&!d.pantones){alert('Arquivo inválido.');return}
+      if(!confirm(`Importar backup de ${new Date(d.exportedAt||0).toLocaleDateString('pt-BR')}?\nOs registros serão atualizados (upsert por ID).`))return;
+      ld('Importando...');
+      for(const[t,rows] of [['pedidos',d.pedidos],['ordens_producao',d.ordens_producao],['pantones',d.pantones],['receitas',d.receitas],['formulacoes',d.formulacoes],['produtos',d.produtos],['fornecedores',d.fornecedores],['avaliacoes_qualidade',d.avaliacoes_qualidade]]){if(rows?.length)await SB.from(t).upsert(rows,{onConflict:'id'})}
+      uld();input.value='';closeM('m-backup');alert('✅ Importação concluída!');renderHome();
+    }catch(err){uld();alert('Erro ao importar: '+err.message)}
+  };r.readAsText(file);
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  SB=window.supabase.createClient(SB_URL,SB_KEY);
+  document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+  showLogin();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</body>
+</html>
