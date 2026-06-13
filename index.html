@@ -206,7 +206,7 @@ tr:hover td{background:var(--bg)}
       <div class="fg"><label>Senha</label><input type="password" class="fi" id="lg-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="login-btn" id="lg-btn" onclick="doLogin()">Entrar</button>
     </div>
-    <div class="lg-footer">by ReginaldoF - SRI v1.0 · Estamparia</div>
+    <div class="lg-footer">SRI v1.0 · Estamparia</div>
   </div>
 </div>
 <div id="app">
@@ -391,8 +391,8 @@ tr:hover td{background:var(--bg)}
   <div class="mf"><button class="btn btn-ghost" onclick="closeM('m-backup')">Fechar</button></div>
 </div></div>
 <script>
-const SB_URL='COLE_SUA_SUPABASE_URL_AQUI';
-const SB_KEY='COLE_SUA_SUPABASE_ANON_KEY_AQUI';
+const SB_URL='https://xugfllhsdksdisbheczu.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1Z2ZsbGhzZGtzZGlzYmhlY3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODE2NTgsImV4cCI6MjA5NjQ1NzY1OH0.p_zQwh8vKK-Yh57XQl4VRq2yirnlhmRs0IC1MT6B0HU';
 let SB=null,CU=null;
 let recCache=[],panCache=[],prodCache=[],fornCache=[],qualCache=[],opCache=[],pedCache=[];
 let editRecId=null,editPanId=null,editProdId=null,editFornId=null,editAvId=null,editUsrId=null;
@@ -1050,9 +1050,25 @@ async function importBk(input){
 
 // INIT
 document.addEventListener('DOMContentLoaded',()=>{
-  SB=window.supabase.createClient(SB_URL,SB_KEY);
   document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
   showLogin();
+  try{
+    if(!SB_URL||SB_URL.includes('COLE_')||!SB_KEY||SB_KEY.includes('COLE_')){
+      throw new Error('Configure SB_URL e SB_KEY no início do <script> com as chaves do seu projeto Supabase.');
+    }
+    if(!window.supabase){
+      throw new Error('Biblioteca do Supabase não carregou. Verifique sua conexão com a internet.');
+    }
+    SB=window.supabase.createClient(SB_URL,SB_KEY);
+  }catch(e){
+    console.error('Erro ao inicializar Supabase:',e);
+    const err=document.getElementById('lg-err');
+    err.textContent='⚠️ '+e.message;
+    err.style.display='block';
+    const btn=document.getElementById('lg-btn');
+    btn.disabled=true;
+    btn.style.opacity='0.5';
+  }
 });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
